@@ -297,13 +297,13 @@ class Solution {
 
 **时间复杂度**
 
-- **最好情况**：$O(Nlog_2N)$（快速排序的递归树层级为$log_2N$）
+- **最好情况**：$O(NlogN)$（快速排序的递归树层级为$log_2N$）
 - **最坏情况**：$O(N^2)$（快速排序的递归树层级为$N$，元素本来就有序且选第一个元素作为pivot）
 
 **空间复杂度**
 
 - 取决于递归的层数
-- **最好情况**：$O(log_2N)$
+- **最好情况**：$O(logN)$
 - **最坏情况**：$O(N)$
 
 **优化**
@@ -315,28 +315,365 @@ class Solution {
 
 ## 6 归并排序
 
+归并排序将原待排数组递归或迭代地分为左右两半，直到数组长度为1，然后合并（merge）左右数组，在合并中完成排序。合并过程采用非原地合并方法，即依次比较两部分已排序数组，将比较结果依次写入新空间中。
 
+![merge.gif](https://pic.leetcode-cn.com/1652692297-eViXmh-merge.gif)
+
+**实现**
+
+```java
+class Solution {
+    public int[] sortArray(int[] nums) {        
+        mergeSort(nums, 0, nums.length - 1);
+        return nums;
+    }
+
+    void mergeSort(int[] nums, int left, int right) {
+        if(left >= right){
+            return;
+        }
+        int mid = (left + right) / 2;
+        mergeSort(nums, left, mid);
+        mergeSort(nums, mid + 1, right);
+        merge(nums, left, mid, right);
+    }
+
+    void merge(int[] nums, int left, int mid, int right) {
+        int len = right - left + 1;
+        int[] temp = new int[len];
+        int l = left;
+        int r = mid + 1;
+        int idx = 0;
+        while(l <= mid && r <= right){
+            if(nums[l] <= nums[r]){
+                temp[idx] = nums[l];
+                l++;
+            } else{
+                temp[idx] = nums[r];
+                r++;
+            }
+            idx++;
+        }
+        while(l <= mid) {
+            temp[idx] = nums[l];
+            idx++;
+            l++;
+        }
+        while(r <= right) {
+            temp[idx] = nums[r];
+            idx++;
+            r++;
+        }
+        System.arraycopy(temp, 0, nums, left, len);
+    }
+}
+```
+
+**稳定性**
+
+- 稳定
+  - 合并时的此判断中的等号 `if(left[l_next] <= right[r_next])`，保证了出现相等元素时，居左的元素总会被放在左侧，即排序是稳定的。
+
+**时间复杂度**
+
+- $O(NlogN)$
+
+**空间复杂度**
+
+- $O(N)$
+
+  - 递归深度为$logN$
+
+  - 递归过程中需要一个长度为n的临时数组保存中间结果
+
+    
 
 ## 7 堆排序
+
+首先建立大顶堆，从最后一个非叶节点开始依次向下调整；建完堆之后，进行排序，每轮堆顶换到最后，向下调整新的堆顶，这一步总共需要n-1轮。
+
+**建堆**：
+
+![heapify.gif](https://pic.leetcode-cn.com/1652693123-umfUhL-heapify.gif)
+
+**排序**：
+
+![siftDown.gif](https://pic.leetcode-cn.com/1652693170-JMfGtM-siftDown.gif)
+
+**实现**
+
+```java
+class Solution {
+    public int[] sortArray(int[] nums) {        
+        int n = nums.length;
+
+        // 1. 建堆
+        for(int i = n / 2 - 1; i >= 0; i--){  // n / 2 - 1是最后一个非叶子节点
+            heapify(nums, n, i);
+        }
+
+        // 2. 排序
+        for(int i = n - 1; i > 0; i--){
+            swap(nums, 0, i);  // 交换最大值到数组末尾
+            heapify(nums, i, 0);  // 重新调整堆（排除已排序部分）
+        }
+
+        return nums;
+    }
+
+    void heapify(int[] nums, int heapsize, int i) {
+        int largest = i;
+        int left = i * 2 + 1;  // 左子节点对应数组下标
+        int right = i * 2 + 2;  // 右子节点对应数组下标
+        
+        if(left < heapsize && nums[left] > nums[largest]){
+            largest = left;
+        }
+
+        if(right < heapsize && nums[right] > nums[largest]){
+            largest = right;
+        }
+
+        if(largest != i){
+            swap(nums, largest, i);
+            heapify(nums, heapsize, largest);
+        }
+    }
+
+    void swap(int[] nums, int i, int j){
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+
+}
+```
+
+**稳定性**
+
+- 不稳定
+
+  - 因为排序时每次需要把根节点交换到最后去，会破坏相对顺序
+
+    ![image.png](https://pic.leetcode-cn.com/1652693077-zEkBlq-image.png)
+
+**时间复杂度**
+
+- $O(NlogN)$
+
+**空间复杂度**
+
+- $O(1)$：原地对排序算法中只有常数项变量
 
 
 
 ## 8 计数排序
 
+计数排序是一种非比较排序算法，通过统计每个元素出现的次数，并利用前缀和计算元素在排序后数组中的位置，最终将元素按顺序填充回原数组。
+
+![count.gif](https://pic.leetcode-cn.com/1652693288-wsXoKv-count.gif)
+
+**实现**
+
+```java
+class Solution {
+    public int[] sortArray(int[] nums) {        
+        // 首先找到最大值最小值
+        int min = nums[0];
+        int max = nums[0];
+
+        for(int i=0; i<nums.length; i++){
+            if(nums[i] < min){
+                min = nums[i];
+            }
+            if(nums[i] > max){
+                max = nums[i];
+            }
+        }
+
+        // 构建count数组统计每个元素出现的次数
+        int[] count = new int[max - min + 1];
+
+        for(int i=0; i<nums.length; i++){
+            count[nums[i] - min]++; 
+        }
+
+        // 构建前缀和数组
+        for(int i=1; i<count.length; i++){
+            count[i] += count[i - 1];
+        }
+
+        // 逆序遍历原数组填充输出数组保证稳定性
+        int[] output = new int[nums.length];
+        for(int i=nums.length - 1; i>=0; i--){
+            output[count[nums[i] - min] - 1] = nums[i];
+            count[nums[i] - min]--;
+        }
+        return output;
+    }
+}
+```
+
+**稳定性**
+
+- 取决于最后一步构建输出数组时是否逆序遍历原数组，逆序的话就是稳定的，反之，不稳定。
+
+**时间复杂度**
+
+- $O(N + K)$
+  - N是要排序数组的长度，K是数组中最大值与最小值的距离
+
+**空间复杂度**
+
+- $O(N + K)$
+  - N是输出数组的长度，K是count数组的长度
+
 
 
 ## 9 桶排序
+
+桶排序将原数组划分到称为 **「桶」** 的多个区间中，然后对每个桶单独进行排序，之后再按桶序和桶内序输出结果。适合于分布较均匀的数据。
+
+![img](https://i-blog.csdnimg.cn/blog_migrate/585d6bd0bf3da609c5b4288f070dec9c.gif#pic_center)
+
+**实现**
+
+```java
+class Solution {
+    public int[] sortArray(int[] nums) {        
+        // 首先找到最大值最小值
+        int min = nums[0];
+        int max = nums[0];
+
+        for(int i=0; i<nums.length; i++){
+            if(nums[i] < min){
+                min = nums[i];
+            }
+            if(nums[i] > max){
+                max = nums[i];
+            }
+        }
+
+        // 计算桶的数量并创建桶
+        int bucketSize = 3;
+        int bucketCount = (int) Math.ceil((max - min) / bucketSize) + 1;
+        List<List<Integer>> buckets = new ArrayList<>();
+        for(int i=0; i<bucketCount; i++){
+            buckets.add(new ArrayList<>());
+        }
+
+        // 将元素分配到桶中
+        for(int i=0; i<nums.length; i++){
+            int index = (nums[i] - min) / bucketSize;
+            buckets.get(index).add(nums[i]); 
+        }
+
+        // 对每个桶内进行排序（使用内置排序）
+        for (List<Integer> bucket : buckets) {
+            Collections.sort(bucket);
+        }
+
+        // 按顺序合并桶内元素
+        int index = 0;
+        for (List<Integer> bucket : buckets) {
+            for (int num : bucket) {
+                nums[index++] = num;
+            }
+        }
+
+        return nums;
+    }
+}
+```
+
+**稳定性**
+
+- 取决于桶内排序方法的稳定性
+
+**时间复杂度**
+
+- 找最大最小值和分配桶均耗费$O(N)$，之后的复杂度取决于每个桶内的排序算法复杂度之和。假设有K个桶，且数据分布均匀若采用 $O(NlogN) $的排序算法，总排序时间复杂度为 $O(K(N/K)log(N/K))$，即$O(Nlog(N/K))$
+
+**空间复杂度**
+
+- $O(N + K)$
+  - 桶数组 buckets[]：$O(K)$
+  - 所有桶共存储N个元素：$O(N)$
 
 
 
 ## 10 基数排序
 
+非比较排序，「基」指的是数的位，例如十进制数 123，共有百十个位，共 3 「位」。基数排序 按数字的位进行循环，每一轮操作都是对当前位 (基数) 的计数排序，使得输出到输出数组后所有数字在截止到当前位上 (即去掉未考察的位后) 是排序状态，考察完最大位后完成排序。
 
+![radix.gif](https://pic.leetcode-cn.com/1652693343-bsRGEO-radix.gif)
+
+**实现**
+
+```java
+class Solution {
+    public int[] sortArray(int[] nums) {        
+        // 首先找到最大值
+        int max = nums[0];
+
+        for(int i=0; i<nums.length; i++){
+            if(nums[i] > max){
+                max = nums[i];
+            }
+        }
+
+        int exp = 1;
+        while(max / exp > 0){
+            sortByDigit(nums, exp);
+            exp = exp * 10;
+        }
+
+        return nums;
+    }
+
+    void sortByDigit(int[] nums, int exp){
+        int[] output = new int[nums.length];
+        int[] count = new int[10];
+
+        for(int i=0; i<nums.length; i++){
+            int index = (nums[i] / exp) % 10;
+            count[index]++;
+        }
+
+        for(int i=1; i<count.length; i++){
+            count[i] += count[i - 1]; 
+        }
+
+        for(int i=nums.length - 1; i>=0; i--){
+            int index = (nums[i] / exp) % 10;
+            output[count[index] - 1] = nums[i];
+            count[index]--;
+        }
+
+        System.arraycopy(output, 0, nums, 0, nums.length);
+    }
+}
+```
+
+**稳定性**
+
+- 取决于构建输出数组时是否逆序遍历原数组，逆序的话就是稳定的，反之，不稳定。
+
+**时间复杂度**
+
+- $O(d \times (N + K))$
+  - d是最大值的总位数
+  - N是待排序数组的长度
+  - K是进制基数（通常 K=10，即 0~9）
+
+**空间复杂度**
+
+- $O(N + K)$
+  - 输出数组`output[]`：$O(N)$
+  - 计数数组 `count[]`：$O(K)$
 
 
 
 ## 参考
 
 https://leetcode.cn/circle/discuss/eBo9UB/
-
-https://labuladong.online/algo/data-structure-basic/sort-basic/

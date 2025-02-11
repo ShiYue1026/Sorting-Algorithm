@@ -2,11 +2,6 @@
 
 ## 基础
 
-**十大排序分类**
-
-![image.png](https://pic.leetcode-cn.com/1652691519-SVKUkM-image.png)
-
-
 
 **什么是排序稳定性？**
 

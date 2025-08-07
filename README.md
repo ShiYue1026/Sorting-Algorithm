@@ -320,16 +320,17 @@ class Solution {
 
 ```java
 class Solution {
-    public int[] sortArray(int[] nums) {        
+    public int[] sortArray(int[] nums) {
+        int n = nums.length;
         mergeSort(nums, 0, nums.length - 1);
         return nums;
     }
 
     void mergeSort(int[] nums, int left, int right) {
-        if(left >= right){
+        if(left >= right) {
             return;
         }
-        int mid = (left + right) / 2;
+        int mid = left + (right - left) / 2;
         mergeSort(nums, left, mid);
         mergeSort(nums, mid + 1, right);
         merge(nums, left, mid, right);
@@ -341,25 +342,22 @@ class Solution {
         int l = left;
         int r = mid + 1;
         int idx = 0;
+
         while(l <= mid && r <= right){
-            if(nums[l] <= nums[r]){
-                temp[idx] = nums[l];
+            if(nums[l] < nums[r]) {
+                temp[idx++] = nums[l];
                 l++;
-            } else{
-                temp[idx] = nums[r];
+            } else {
+                temp[idx++] = nums[r];
                 r++;
             }
-            idx++;
         }
+
         while(l <= mid) {
-            temp[idx] = nums[l];
-            idx++;
-            l++;
+            temp[idx++] = nums[l++];
         }
         while(r <= right) {
-            temp[idx] = nums[r];
-            idx++;
-            r++;
+            temp[idx++] = nums[r++];
         }
         System.arraycopy(temp, 0, nums, left, len);
     }

@@ -246,39 +246,36 @@ class Solution {
 
 ```java
 class Solution {
-    public int[] sortArray(int[] nums) {        
-        return quickSort(nums, 0, nums.length - 1);
-    }
-
-    int[] quickSort(int[] nums, int left, int right){
-        if(left < right){
-            int pivotIndex = partition(nums, left, right);
-            quickSort(nums, left, pivotIndex - 1);
-            quickSort(nums, pivotIndex + 1, right);
-        }
+    public int[] sortArray(int[] nums) {
+        quickSort(nums, 0, nums.length - 1);
         return nums;
     }
 
-    int partition(int[] nums, int left, int right){
-        // 随机选择pivot
+    void quickSort(int[] nums, int start, int end){
+        if(start >= end){
+            return;
+        }
         Random random = new Random();
-        int idx = left + random.nextInt(right - left + 1);
-        swap(nums, left, idx);
-        int pivot = nums[left];
-        while(left != right){
-            // 从right开始
-            while(right > left && nums[right] >= pivot){
+        int pivotIdx = start + random.nextInt(end - start + 1);
+        int pivot = nums[pivotIdx];
+        swap(nums, start, pivotIdx);
+        int left = start;
+        int right = end;
+
+        while(left < right){
+            while(left < right && nums[right] >= pivot){
                 right--;
             }
             nums[left] = nums[right];
-
             while(left < right && nums[left] <= pivot){
                 left++;
-            }
+            } 
             nums[right] = nums[left];
         }
+
         nums[left] = pivot;
-        return left;
+        quickSort(nums, start, left - 1);
+        quickSort(nums, left + 1, end);
     }
 
     void swap(int[] nums, int i, int j){

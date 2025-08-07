@@ -345,11 +345,9 @@ class Solution {
 
         while(l <= mid && r <= right){
             if(nums[l] < nums[r]) {
-                temp[idx++] = nums[l];
-                l++;
+                temp[idx++] = nums[l++];
             } else {
-                temp[idx++] = nums[r];
-                r++;
+                temp[idx++] = nums[r++];
             }
         }
 
